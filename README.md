@@ -172,7 +172,7 @@
 <img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E5%9B%9B%E6%9C%BA%E4%BD%8D1.jpg" width="420" alt="系统实物图">
 <img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E8%B7%AF%E7%94%B12.jpg" width="400" alt="系统实物图">
 
-## 关键调试问题
+## 调试事项
 
 ### 1. Sensor MIPI 未就绪 → 编码器无帧
 
