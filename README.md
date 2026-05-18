@@ -114,7 +114,7 @@
 - 默认全部子码流 (700kbps × 4 = 2.8Mbps)
 <img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E5%A4%9A%E6%9C%BA%E4%BD%8D%E8%BF%90%E8%A1%8C2.jpg" width="400" alt="系统实物图">
 
-### 远程控制（均通过 Web 界面操作）
+### 远程web控制台
 <img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E6%8E%A7%E5%88%B6%E5%8F%B0.png" width="400" alt="系统实物图">
 
 | 功能 | 控件 | 说明 |
@@ -170,8 +170,8 @@
 
 ### fh8862四机联调实物
 
-<img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E5%9B%9B%E6%9C%BA%E4%BD%8D1.jpg" width="400" alt="系统实物图">
-<img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E5%9B%9B%E6%9C%BA%E4%BD%8D1.jpg" width="400" alt="系统实物图">
+<img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E5%9B%9B%E6%9C%BA%E4%BD%8D1.jpg" width="400" alt="系统实物图" style="transform: rotate(90deg);">
+<img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E8%B7%AF%E7%94%B12.jpg" width="400" alt="系统实物图">
 
 ## 关键调试问题
 
