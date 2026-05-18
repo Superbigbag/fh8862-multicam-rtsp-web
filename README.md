@@ -39,14 +39,14 @@
 │   FH8862 开发板   │                   │   Ubuntu 服务器  │                   │   浏览器 (PC)     │
 │   192.168.1.3    │                   │   192.168.1.1    │                   │   :8080          │
 │                  │                   │                  │                   │                  │
-│  IMX415 → ISP    │  视频流推流        │  MediaMTX        │  视频流转发        │  2×2 视频墙      │
-│  → H.264 编码    │ ─────────────────→ │  (RTSP→WebRTC)   │ ───────────────→  │  主/子码流切换   │
-│  → live555 RTSP  │                    │                  │
-│                  │                    │                  │    HTTP API       │                  │
-│                  │                    │  Node.js         │ ←───────────────  │  控制面板        │
-│  控制服务 :9999   │ ←── TCP 控制指令 ──│ (HTTP→TCP 代理)   │                   │  OSD/Mask/LED    │
-│                  │                    │                  │                   │  录像/时间同步    │
-└──────────────────┘                    └──────────────────┘                   └──────────────────┘
+│  IMX415 → ISP    │  视频流推流        │  MediaMTX        │  视频流转发        │   2×2 视频墙      │
+│  → H.264 编码    │ ────────────────→ │  (RTSP→WebRTC)   │ ───────────────→  │  主/子码流切换     │
+│  → live555 RTSP  │                   │                  │                   │                  │
+│                  │                   │                  │    HTTP API       │                  │
+│                  │                   │  Node.js         │ ←───────────────  │    控制面板       │
+│  控制服务 :9999   │ ←──TCP 控制指令 ──│  (HTTP→TCP 代理)  │                   │  OSD/Mask/LED    │
+│                  │                   │                  │                   │  录像/时间同步    │
+└──────────────────┘                   └──────────────────┘                   └──────────────────┘
 ```
 
 ### 多摄像头拓扑
@@ -165,12 +165,12 @@
 ## 项目结果
 
 ### 板端推流中
-<img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E5%A4%9A%E6%9C%BA%E4%BD%8D%E8%BF%90%E8%A1%8C1.jpg" width="400" alt="系统实物图">
+<img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E5%A4%9A%E6%9C%BA%E4%BD%8D%E8%BF%90%E8%A1%8C1.jpg" width="300" alt="系统实物图">
 
 
 ### fh8862四机联调实物
 
-<img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E5%9B%9B%E6%9C%BA%E4%BD%8D1.jpg" width="400" alt="系统实物图" style="transform: rotate(90deg);">
+<img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E5%9B%9B%E6%9C%BA%E4%BD%8D1.jpg" width="420" alt="系统实物图">
 <img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E8%B7%AF%E7%94%B12.jpg" width="400" alt="系统实物图">
 
 ## 关键调试问题
@@ -181,7 +181,7 @@ VLC 可连接无画面，日志 `API_ISP_Run error 0xa0084100`。Sensor 复位�
 
 ### 2. I 帧超过 150KB 被 live555 StreamParser 截断 → 花屏
 
-live555 `BANK_SIZE=150KB`，超限截断后 `fNumTruncatedBytes` 被 `afterGettingBytes1()` 忽略，新旧帧数据混叠致 NALU 错乱。**修复:** `h264_live_source.cpp` 改为分片交付，`m_currentOffset` 跟踪进度；FrameQueue 30→10。见 `src/h264_live_source.cpp`。
+live555 `BANK_SIZE=150KB`，超限截断后 `fNumTruncatedBytes` 被 `afterGettingBytes1()` 忽略，新旧帧数据混叠致 NALU 错乱。**修复:** `h264_live_source.cpp` 改为分片交付。见 `src/h264_live_source.cpp`。
 
 ### 3. `includeStartCodeInOutput=True` 起始码干扰 FU-A → 主码流花屏
 
@@ -189,11 +189,11 @@ H264VideoStreamFramer 在每个 NALU 前加 `00 00 00 01`，H264VideoRTPSink FU-
 
 ### 4. 编码器输出前导零字节 → 间歇花屏
 
-FH8862 编码器个别 NALU 带前导 `0x00`，旧版 RTSP 有跳过逻辑而新版 live555 管线缺失。**修复:** `main.c` 中 `sample_push_h264_stream_to_rtsp()` 增加前导零跳过+干净起始码重写。见 `src/main.c`。
+FH8862 编码器个别 NALU 带前导 `0x00`，之前 RTSP 有跳过逻辑而新版 live555 管线缺失。**修复:** `main.c` 中 `sample_push_h264_stream_to_rtsp()` 增加前导零跳过+起始码重写。见 `src/main.c`。
 
 ### 5. 每帧 malloc/free → 长时间运行内存碎片化崩溃
 
-双码流每秒 50 次 malloc/free (I帧可达 100KB+)，嵌入式 malloc 碎片化后大块分配失败。**缓解:** FrameQueue 降至 10、LED 线程泄漏已修补。**待修:** 替换为预分配环形缓冲区。
+双码流每秒 50 次 malloc/free (I帧可达 100KB+)，嵌入式 malloc 碎片化后大块分配失败。**缓解:** FrameQueue 降至 10、LED 线程泄漏已修补。
 
 
 
@@ -207,8 +207,8 @@ FH8862 编码器个别 NALU 带前导 `0x00`，旧版 RTSP 有跳过逻辑而新
 - 内核模块: vmm, xbus_rpc, media_process, vb, isp, vpu, enc, jpeg, bgm, nna, vgs, vou
 
 ### 服务器端 (Ubuntu)
-- [MediaMTX](https://github.com/bluenviron/mediamtx) v1.11.3 (`start.sh` 自动下载)
+- [MediaMTX](https://github.com/bluenviron/mediamtx) v1.11.3 (`start.sh` 中下载)
 - Node.js + [iconv-lite](https://www.npmjs.com/package/iconv-lite) (中文字库 GB2312 编码转换)
 
 ### 浏览器
-- 支持 WebRTC 的现代浏览器 (Chrome, Edge, Firefox)
+- 支持 WebRTC 的现代浏览器 (Chrome, Edge等)
