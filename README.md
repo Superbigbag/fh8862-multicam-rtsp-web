@@ -187,11 +187,8 @@ live555 `BANK_SIZE=150KB`，超限截断后 `fNumTruncatedBytes` 被 `afterGetti
 
 H264VideoStreamFramer 在每个 NALU 前加 `00 00 00 01`，H264VideoRTPSink FU-A 分片器预期纯 NALU，起始码 `0x00` 被误当 NALU header。**修复:** `includeStartCodeInOutput` 改为 `False`。见 `src/h264_subsession.cpp`。
 
-### 4. 编码器输出前导零字节 → 间歇花屏
 
-FH8862 编码器个别 NALU 带前导 `0x00`，之前 RTSP 有跳过逻辑而新版 live555 管线缺失。**修复:** `main.c` 中 `sample_push_h264_stream_to_rtsp()` 增加前导零跳过+起始码重写。见 `src/main.c`。
-
-### 5. 每帧 malloc/free → 长时间运行内存碎片化崩溃
+### 4. 每帧 malloc/free → 长时间运行内存碎片化崩溃
 
 双码流每秒 50 次 malloc/free (I帧可达 100KB+)，嵌入式 malloc 碎片化后大块分配失败。**缓解:** FrameQueue 降至 10、LED 线程泄漏已修补。
 
