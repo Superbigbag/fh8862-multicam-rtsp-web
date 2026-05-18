@@ -182,7 +182,7 @@ VLC 可连接无画面，日志 `API_ISP_Run error 0xa0084100`。Sensor 复位�
 
 live555 `BANK_SIZE=150KB`，超限截断后 `fNumTruncatedBytes` 被 `afterGettingBytes1()` 忽略，新旧帧数据混叠致 NALU 错乱。**修复:** `h264_live_source.cpp` 改为分片交付。见 `src/h264_live_source.cpp`。
 
-### 3. `includeStartCodeInOutput=True` 起始码干扰 FU-A → 主码流花屏
+### 3. `includeStartCodeInOutput=True` 起始码干扰 → 主码流花屏
 
 H264VideoStreamFramer 在每个 NALU 前加 `00 00 00 01`，H264VideoRTPSink FU-A 分片器预期纯 NALU，起始码 `0x00` 被误当 NALU header。**修复:** `includeStartCodeInOutput` 改为 `False`。见 `src/h264_subsession.cpp`。
 
