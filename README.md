@@ -25,35 +25,28 @@
 | 板端控制 | TCP 控制服务 (端口 9999) |
 
 **核心设计决策：**
-- 用手写的 C 语言 RTSP 服务器 (~1641行) 替换为 live555 库，提升稳定性
+- live555 库中的RTSP服务器，稳定通用
 - 视频链路和控制链路分离：RTSP 负责推流，TCP 负责控制命令
-- 一个网页即可同时预览和控制 4 路摄像头
+- 一个网页便可同时预览和控制 4 路摄像头
 
 ---
 
 ## 系统架构
 
 ```
-┌──────────────────┐                        ┌──────────────────┐
-│   FH8862 开发板   │   RTSP (端口 8554)     │  Ubuntu 服务器    │
-│   192.168.1.x     │ ──────────────────────→│  192.168.1.1      │
-│                   │                        │                   │
-│  IMX415 → ISP     │                        │  MediaMTX         │
-│    → H.264 编码   │   TCP (端口 9999)      │  (RTSP→WebRTC)    │
-│    → live555 RTSP │ ←──────────────────────│                   │
-│                   │                        │  Node.js          │
-│  控制服务         │   控制指令              │  (HTTP→TCP 代理)  │
-└──────────────────┘                        └────────┬──────────┘
-                                                     │
-                                            WebRTC   │  HTTP API
-                                            (WHEP)   │
-                                                     ▼
-                                            ┌──────────────────┐
-                                            │   浏览器 (PC)     │
-                                            │   :8080           │
-                                            │   2×2 视频墙      │
-                                            │   控制面板        │
-                                            └──────────────────┘
+┌──────────────────┐    RTSP :8554     ┌──────────────────┐    WebRTC(WHEP)   ┌──────────────────┐
+│                  │ ─────────────────→│                  │ ───────────────→  │                  │
+│   FH8862 开发板   │                   │   Ubuntu 服务器  │                   │   浏览器 (PC)     │
+│   192.168.1.3    │                   │   192.168.1.1    │                   │   :8080          │
+│                  │                   │                  │                   │                  │
+│  IMX415 → ISP    │  视频流推流        │  MediaMTX        │  视频流转发        │  2×2 视频墙      │
+│  → H.264 编码    │ ─────────────────→ │  (RTSP→WebRTC)   │ ───────────────→  │  主/子码流切换   │
+│  → live555 RTSP  │                    │                  │
+│                  │                    │                  │    HTTP API       │                  │
+│                  │                    │  Node.js         │ ←───────────────  │  控制面板        │
+│  控制服务 :9999   │ ←── TCP 控制指令 ──│ (HTTP→TCP 代理)   │                   │  OSD/Mask/LED    │
+│                  │                    │                  │                   │  录像/时间同步    │
+└──────────────────┘                    └──────────────────┘                   └──────────────────┘
 ```
 
 ### 多摄像头拓扑
@@ -119,8 +112,10 @@
 - 2×2 宫格同时展示 4 路摄像头
 - 每路可独立切换主码流/子码流
 - 默认全部子码流 (700kbps × 4 = 2.8Mbps)
+<img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E5%A4%9A%E6%9C%BA%E4%BD%8D%E8%BF%90%E8%A1%8C2.jpg" width="400" alt="系统实物图">
 
 ### 远程控制（均通过 Web 界面操作）
+<img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E6%8E%A7%E5%88%B6%E5%8F%B0.png" width="400" alt="系统实物图">
 
 | 功能 | 控件 | 说明 |
 |------|------|------|
@@ -146,7 +141,7 @@
   │                          │  camera_id=2 → .1.12     │
   │                          │  TCP: "ROTATE 1\n"       │
   │                          ├─────────────────────────→│
-  │                          │          "OK"             │
+  │                          │          "OK"            │
   │                          │←─────────────────────────┤
   │  {"ok":true}             │                          │
   │←─────────────────────────┤                          │
@@ -167,35 +162,16 @@
 
 ---
 
-## API 参考
+## 项目结果
 
-### WebRTC 推流路径 (MediaMTX)
+### 板端推流中
+<img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E5%A4%9A%E6%9C%BA%E4%BD%8D%E8%BF%90%E8%A1%8C1.jpg" width="400" alt="系统实物图">
 
-```
-http://192.168.1.1:8889/cam{1-4}_{main|sub}/whep
-```
 
-### HTTP 控制 API (Node.js → 板端 TCP)
+### fh8862四机联调实物
 
-所有控制接口请求体携带 `{ camera_id: 1-4 }` 字段。
-
-| 接口 | 参数 | 板端命令 |
-|------|------|----------|
-| `POST /api/rotate` | `rotate: bool` | `ROTATE 0/1` |
-| `POST /api/osd/color` | `r, g, b: 0-255` | `OSD_COLOR R G B` |
-| `POST /api/osd/text` | `text: string` | `OSD_TEXT_HEX <hex>` |
-| `POST /api/osd/text_enable` | `enable: bool` | `OSD_TEXT_EN 0/1` |
-| `POST /api/osd/invert` | `invert: bool` | `OSD_INVERT 0/1` |
-| `POST /api/mask/color` | `r, g, b: 0-255` | `MASK_COLOR R G B` |
-| `POST /api/mask/enable` | `enable: bool` | `MASK_ENABLE 0/1` |
-| `POST /api/mask/region/set` | `index, enable, x, y, w, h` | `MASK_REGION_SET ...` |
-| `POST /api/mask/region/del` | `index: int` | `MASK_REGION_DEL ...` |
-| `POST /api/record/start` | `duration: 秒` | `RECORD_START <s>` |
-| `POST /api/record/stop` | - | `RECORD_STOP` |
-| `POST /api/led` | `mode: 0/1/2` | `LED 0/1/2` |
-| `POST /api/time/sync` | `timestamp: ms` (无需 camera_id) | 广播 `TIME_SYNC` 到全部板子 |
-
----
+<img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E5%9B%9B%E6%9C%BA%E4%BD%8D1.jpg" width="400" alt="系统实物图">
+<img src="https://github.com/Superbigbag/fh8862-multicam-rtsp-web/blob/main/image/%E5%9B%9B%E6%9C%BA%E4%BD%8D1.jpg" width="400" alt="系统实物图">
 
 ## 关键调试问题
 
