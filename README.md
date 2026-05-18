@@ -94,8 +94,7 @@
 │   ├── mediamtx.yml            # MediaMTX 8路转发配置
 │   ├── start.sh / stop.sh      # 启停脚本
 │   └── mediamtx/               # MediaMTX 二进制
-├── debug_汇总.md               # 完整调试记录
-└── 项目总结.md                  # 本文件
+└── readme.md                  
 ```
 
 ---
