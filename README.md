@@ -1,7 +1,7 @@
 # FH8862 RTSP 多视频流服务器
 
 > 基于富瀚 FH8862 (ARM Cortex-A7) 的多路 RTSP 视频流服务器，支持 WebRTC 浏览器预览与远程控制。<br>
-> 富瀚 FH8862开发板及其 SDK 由海康提供。
+> 富瀚 FH8862 开发板及其 SDK 由海康提供。
 
 [![平台](https://img.shields.io/badge/平台-FH8862%20ARM%20Cortex--A7-blue)](#)
 [![RTSP](https://img.shields.io/badge/RTSP-live555-green)](#)
